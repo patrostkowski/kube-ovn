@@ -451,6 +451,73 @@ func TestServiceHealthChecksDisabled(t *testing.T) {
 	}
 }
 
+func TestGetIPPortMapping(t *testing.T) {
+	defaultSubnet := &kubeovnv1.Subnet{
+		ObjectMeta: metav1.ObjectMeta{Name: util.DefaultSubnet},
+		Spec:       kubeovnv1.SubnetSpec{Provider: util.OvnProvider},
+	}
+
+	endpointSliceNoTarget := &discoveryv1.EndpointSlice{
+		ObjectMeta: metav1.ObjectMeta{Name: "svc-slice", Namespace: "default"},
+		Endpoints: []discoveryv1.Endpoint{{
+			Addresses: []string{"10.0.0.1"},
+		}},
+	}
+
+	svcNoSelector := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{Name: "svc", Namespace: "default"},
+		Spec:       corev1.ServiceSpec{Selector: nil},
+	}
+
+	podNoIP := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "pod-nomatch",
+			Namespace: "default",
+		},
+	}
+
+	fc, err := newFakeControllerWithOptions(t, &FakeControllerOptions{
+		Subnets: []*kubeovnv1.Subnet{defaultSubnet},
+		Pods:    []*corev1.Pod{podNoIP},
+	})
+	require.NoError(t, err)
+	ctrl := fc.fakeController
+
+	mapping, err := ctrl.getIPPortMapping([]*discoveryv1.EndpointSlice{endpointSliceNoTarget}, svcNoSelector, "10.0.0.20")
+	require.NoError(t, err)
+	assert.Empty(t, mapping)
+}
+
+func TestGetIPPortMappingWithNoTargets(t *testing.T) {
+	defaultSubnet := &kubeovnv1.Subnet{
+		ObjectMeta: metav1.ObjectMeta{Name: util.DefaultSubnet},
+		Spec:       kubeovnv1.SubnetSpec{Provider: util.OvnProvider},
+	}
+
+	fakeCtrl, err := newFakeControllerWithOptions(t, &FakeControllerOptions{
+		Subnets: []*kubeovnv1.Subnet{defaultSubnet},
+	})
+	require.NoError(t, err)
+	c := fakeCtrl.fakeController
+
+	endpointSlices := []*discoveryv1.EndpointSlice{{
+		ObjectMeta: metav1.ObjectMeta{Name: "slice", Namespace: "default"},
+		Endpoints: []discoveryv1.Endpoint{
+			{Addresses: []string{"10.0.0.1"}},
+		},
+	}}
+
+	podWithoutIP := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "pod-noip",
+			Namespace: "default",
+		},
+	}
+
+	mapping := c.getIPPortMappingWithNoTargets(endpointSlices, []*corev1.Pod{podWithoutIP}, "10.0.0.20")
+	assert.Empty(t, mapping)
+}
+
 // TestReplaceEndpointAddressesWithSecondaryIPs tests the real controller method
 func TestReplaceEndpointAddressesWithSecondaryIPs(t *testing.T) {
 	tests := []struct {
