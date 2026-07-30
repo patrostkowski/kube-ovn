@@ -1,4 +1,4 @@
-{{- if include "kubeovn.renderDataPlane" . }}
+{{- if include "kubeovn.renderInfrastructure" . }}
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:

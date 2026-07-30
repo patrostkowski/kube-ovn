@@ -253,7 +253,7 @@ Emits "true" when this Helm release should render control-plane resources;
 empty otherwise. Use with {{- if include "kubeovn.renderControlPlane" . }}.
 */}}
 {{- define "kubeovn.renderControlPlane" -}}
-{{- if or (eq .Values.installMode "full") (eq .Values.installMode "controlPlaneOnly") -}}
+{{- if or (eq .Values.installMode "full") (eq .Values.installMode "controlPlaneOnly") (eq .Values.installMode "infrastructureOnly") -}}
 true
 {{- end -}}
 {{- end -}}
@@ -261,9 +261,23 @@ true
 {{/*
 Render gate for data-plane resources (CRDs + kube-ovn-controller + ovs-ovn +
 kube-ovn-cni + kube-ovn-pinger + kube-ovn-monitor + their RBAC).
+ovs-ovn is gated by renderInfrastructure instead so it can be deployed
+independently in infrastructureOnly mode.
 */}}
 {{- define "kubeovn.renderDataPlane" -}}
 {{- if or (eq .Values.installMode "full") (eq .Values.installMode "dataPlaneOnly") -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
+Render gate for infrastructure data-plane resources (ovs-ovn DaemonSet only).
+Emits "true" when this Helm release should render ovs-ovn without the
+higher-level kube-ovn-controller, kube-ovn-cni, or kube-ovn-pinger.
+Use with {{- if include "kubeovn.renderInfrastructure" . }}.
+*/}}
+{{- define "kubeovn.renderInfrastructure" -}}
+{{- if or (eq .Values.installMode "full") (eq .Values.installMode "dataPlaneOnly") (eq .Values.installMode "infrastructureOnly") -}}
 true
 {{- end -}}
 {{- end -}}

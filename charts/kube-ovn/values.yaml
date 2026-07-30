@@ -28,16 +28,21 @@ MASTER_NODES_LABEL: "kube-ovn/role=master"
 OVN_CENTRAL_MODE: "cluster"
 
 # installMode controls which slice of the chart this Helm release renders.
-#   full:             all components in one cluster (default, classic install).
-#   controlPlaneOnly: only ovn-central + ovn-nb/ovn-sb/ovn-northd Services and
-#                     their RBAC. Use on the management cluster of a Kamaji-
-#                     style split deployment.
-#   dataPlaneOnly:    CRDs + kube-ovn-controller + kube-ovn-cni + ovs-ovn +
-#                     pinger and their RBAC. Use on tenant data-plane
-#                     clusters that connect back to an external ovn-central via
-#                     externalOvnCentral below. kube-ovn-monitor is intentionally
-#                     skipped: it reads local OVN Unix sockets / DB files and
-#                     does not yet know how to talk to a remote ovn-central.
+#   full:                all components in one cluster (default, classic install).
+#   controlPlaneOnly:    only ovn-central + ovn-nb/ovn-sb/ovn-northd Services and
+#                        their RBAC. Use on the management cluster of a Kamaji-
+#                        style split deployment.
+#   dataPlaneOnly:       CRDs + kube-ovn-controller + kube-ovn-cni + ovs-ovn +
+#                        pinger and their RBAC. Use on tenant data-plane
+#                        clusters that connect back to an external ovn-central via
+#                        externalOvnCentral below. kube-ovn-monitor is intentionally
+#                        skipped: it reads local OVN Unix sockets / DB files and
+#                        does not yet know how to talk to a remote ovn-central.
+#   infrastructureOnly:  ovn-central + ovs-ovn (OVS + ovn-controller DaemonSet)
+#                        + Services + RBAC. No kube-ovn-controller, no CNI, no
+#                        pinger. Use when the OVN+OVS infrastructure is managed
+#                        by this chart but a higher-level controller (e.g.
+#                        OpenStack Neutron) owns logical network provisioning.
 installMode: full
 
 # When installMode=dataPlaneOnly, the agents and controller cannot rely on a
